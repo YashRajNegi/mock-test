@@ -13,6 +13,18 @@ import {
   sectionMaxScores,
 } from "@/data/english-questions"
 
+// --- Add/Update these types ---
+type Option = { key: string; text: string }
+type Question = {
+  question: string
+  options: Option[]
+  passage?: string
+  directions?: string
+  // ...other fields if needed
+}
+type AnswerKey = { [key: number]: string }
+type SectionMaxScores = { [key: number]: number }
+
 interface Answer {
   questionId: number
   selectedOption: string
@@ -26,15 +38,15 @@ interface TestResultsProps {
 
 export default function TestResults({ answers, onRetakeTest }: TestResultsProps) {
   const sections = [
-    { id: 1, name: "Reasoning Ability", questions: reasoningQuestions, maxScore: 50 },
-    { id: 2, name: "English Language", questions: englishQuestions, maxScore: 25 },
-    { id: 3, name: "Quantitative Aptitude", questions: quantitativeQuestions, maxScore: 50 },
+    { id: 1, name: "Reasoning Ability", questions: reasoningQuestions as Question[], maxScore: 50 },
+    { id: 2, name: "English Language", questions: englishQuestions as Question[], maxScore: 25 },
+    { id: 3, name: "Quantitative Aptitude", questions: quantitativeQuestions as Question[], maxScore: 50 },
   ]
 
   const calculateSectionResults = (sectionId: number) => {
     const sectionAnswers = answers.filter((a) => a.sectionId === sectionId)
     const sectionKey = sectionId === 1 ? "reasoning" : sectionId === 2 ? "english" : "quantitative"
-    const answerKey = answerKeys[sectionKey]
+    const answerKey: AnswerKey = answerKeys[sectionKey]
 
     let correct = 0
     let incorrect = 0
@@ -44,7 +56,7 @@ export default function TestResults({ answers, onRetakeTest }: TestResultsProps)
       const userAnswer = sectionAnswers.find((a) => a.questionId === i)
       if (!userAnswer) {
         unanswered++
-      } else if (userAnswer.selectedOption === answerKey[String(i)]) {
+      } else if (userAnswer.selectedOption === answerKey[Number(i)]) {
         correct++
       } else {
         incorrect++
@@ -53,7 +65,7 @@ export default function TestResults({ answers, onRetakeTest }: TestResultsProps)
 
     // Calculate score with negative marking (-0.25 for wrong answers)
     const score = Math.max(0, correct - incorrect * 0.25)
-    const maxScore = sectionMaxScores[sectionId]
+    const maxScore = (sectionMaxScores as SectionMaxScores)[Number(sectionId)]
     const percentage = (score / maxScore) * 100
 
     return { correct, incorrect, unanswered, score, maxScore, percentage }
@@ -88,7 +100,7 @@ export default function TestResults({ answers, onRetakeTest }: TestResultsProps)
 
   const getQuestionResult = (sectionId: number, questionId: number) => {
     const sectionKey = sectionId === 1 ? "reasoning" : sectionId === 2 ? "english" : "quantitative"
-    const correctAnswer = answerKeys[sectionKey][questionId]
+    const correctAnswer = (answerKeys[sectionKey] as AnswerKey)[Number(questionId)]
     const userAnswer = answers.find((a) => a.sectionId === sectionId && a.questionId === questionId)
 
     return {
